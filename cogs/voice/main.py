@@ -1,7 +1,7 @@
 """A Py-Cord Cog (Gear) Made to mange temp channels"""
 import discord
 from cogs.voice.views import Views
-from cogs.voice.dataBase import DataBase
+from cogs.voice.DataBase import DataBase
 
 class Control(discord.Cog):
     def __init__(self, bot):
