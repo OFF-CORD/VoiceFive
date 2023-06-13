@@ -13,6 +13,16 @@ a Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 ​
 ​ <!-- say welcome to the ZERO-WIDTH-SPACE! -->
 ​
+​
+
+# Features?
+- Higley Customized
+- Each User Permissions 
+- SlashCommands
+- SelectMenus
+- Modals
+- and there is more later~
+
 
 # How To Install?
 - `git clone https://github.com/DARSHTRON/VoiceFive`
