@@ -16,7 +16,11 @@ class Control(discord.Cog):
         await DataBase.add_guild(guild_id=ctx.guild.id, vc_id=channel.id, vc_category_id=category.id, channel_limit=0, channel_bitrate=3,)
         return await ctx.respond(f"Done setup the temp voice channel, this is the {channel.mention}!")
         
-    # -- Events -- #        
+    # -- Events -- #
+    @discord.Cog.listener()
+    async def on_ready(self):
+        self.bot.add_view(Views.Dropdown())
+        print("Loadded Presistent View (Dropdown)")
 
     @discord.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
