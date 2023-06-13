@@ -1,7 +1,7 @@
 # import json
 # import os
 # import time
-from cogs.voice.dataBase import DataBase
+from cogs.voice.DataBase import DataBase
 import discord
 import asyncio
 
