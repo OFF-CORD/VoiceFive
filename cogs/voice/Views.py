@@ -101,6 +101,7 @@ class Views():
                                     discord.SelectOption(label="Lock", description="To Lock this channel with it's users", value="lock"),
                                     discord.SelectOption(label="Hide", description="To Hide this channel and only users inside will be able to see it", value="hide"),
                                     discord.SelectOption(label="Bitrate", description="To Change this channel bitrate", value="bitrate"),
+                                    discord.SelectOption(label="Clear", description="To Clear up this channel Messages", value="clear"),
                                     ],
                                 )
         async def settings_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -126,14 +127,14 @@ class Views():
                     except:
                         return
                 modal.callback = modal_callback
-                await interaction.response.send_modal(modal=modal)
+                return await interaction.response.send_modal(modal=modal)
 
             elif selected == "limit":
                 modal = discord.ui.Modal(title="Channel Limit")
                 modal.add_item(discord.ui.InputText(label="New Channel Limit", placeholder="Please enter the new channel limit (0 for unlimited)", value=interaction.channel.user_limit))
                 async def modal_callback(interaction: discord.Interaction):
                     await interaction.response.defer()
-                    channel_limit = modal.children[0].value # FIXME
+                    channel_limit = modal.children[0].value
                     if not channel_limit.isnumeric():
                         msg = await interaction.respond(f"Please Input a Valid Number!", ephemeral=True)
                         await asyncio.sleep(5)
@@ -149,26 +150,49 @@ class Views():
                     except:
                         return
                 modal.callback = modal_callback
-                await interaction.response.send_modal(modal=modal)
+                return await interaction.response.send_modal(modal=modal)
+                
+            elif selected == "bitrate":
+                channel_bits = int(str(int(interaction.guild.bitrate_limit))[:-3]) # Bro wtf is this butt-shit?
+                placeholder = f"From 8 To {channel_bits}"
+                modal = discord.ui.Modal(title="Channel Bitrate")
+                modal.add_item(discord.ui.InputText(label="Channel Bitrate Value", placeholder=placeholder, value=interaction.channel.user_limit))
+                async def modal_callback(interaction: discord.Interaction):
+                    await interaction.response.defer()
+                    modal_value = modal.children[0].value
+                    if not modal_value.isnumeric():
+                        return await interaction.respond(f"Please Input a Valid Number!", ephemeral=True, delete_after=5)
+                    elif int(modal_value) > channel_bits or int(modal_value) < 8:
+                        return await interaction.respond(f"Please Input a Valid Number Between 8 and {str(channel_bits)}", ephemeral=True, delete_after=5)
+                    await interaction.channel.edit(bitrate=(int(modal_value) * 1000))
+                    return await interaction.respond(f"Done, Channel Bitrate has been Changed To {modal_value}", ephemeral=True, delete_after=5)
+                modal.callback = modal_callback
+                return await interaction.response.send_modal(modal=modal)
+            
             # -- #
             await interaction.response.defer()
             # -- #
             if selected == "info": # No idea for adding owner check for this.. right?
                 channel: discord.VoiceChannel = await interaction.guild.fetch_channel(int(interaction.channel_id))
                 embed = discord.Embed(title='Channel Information', color=discord.Color.blurple())
-                embed.add_field(name="Channel Creator", value=f"<@{channel_data[0]}>\nID: `{channel_data[0]}`\n_for more info run `/user <User>`_", inline=False)
-                embed.add_field(name="Created At", value=f"<t:{int(channel.created_at.timestamp())}:R>", inline=False)
-                embed.add_field(name="Is NSFW", value=f"{'Nope' if not channel.is_nsfw() else 'Yup'}", inline=False)
-                embed.add_field(name="Channel bitrate", value=f"{channel.bitrate} || {'Low Quality' if channel.bitrate < 60000 else 'Mid Quality' if channel.bitrate < 90000 else 'High Quality'}", inline=False)
-                embed.add_field(name="Video Quality", value=f"{'Full Quality' if channel.video_quality_mode == discord.VideoQualityMode.full else 'Normal Quality'}", inline=False)
-                embed.add_field(name="User Limit", value=f"{'Unlimited' if channel.user_limit == 0 else channel.user_limit}", inline=False)
+                embed.add_field(name="Channel Name", value=f"{channel.name}")
+                embed.add_field(name="Channel Creator", value=f"<@{channel_data[0]}>\nID: `{channel_data[0]}`")
+                embed.add_field(name="", value="", inline=False) # discord.Embed() ☕
+                embed.add_field(name="Created At", value=f"<t:{int(channel.created_at.timestamp())}:R>")
+                embed.add_field(name="Is NSFW", value=f"{'Nope' if not channel.is_nsfw() else 'Yup'}")
+                embed.add_field(name="", value="", inline=False)
+                embed.add_field(name="Channel bitrate", value=f"{channel.bitrate} || {'Low Quality' if channel.bitrate < 60000 else 'Mid Quality' if channel.bitrate < 90000 else 'High Quality'}")
+                embed.add_field(name="Video Quality", value=f"{'Full Quality' if channel.video_quality_mode == discord.VideoQualityMode.full else 'Normal Quality'}")
+                embed.add_field(name="", value="", inline=False)
+                embed.add_field(name="User Limit", value=f"{'Unlimited' if channel.user_limit == 0 else channel.user_limit}")
                 try: slowmode_delay = channel.slowmode_delay # For now, there is no attr for slowmode, it maybe magred from my PR on #2112
                 except: slowmode_delay = 0
-                embed.add_field(name="Slowmode Delay", value=f"{'No Slowmode' if slowmode_delay == 0 else slowmode_delay}", inline=False)
+                embed.add_field(name="Slowmode Delay", value=f"{'No Slowmode' if slowmode_delay == 0 else slowmode_delay}")
+                embed.add_field(name="", value="", inline=False)
                 member_list = []
                 for member in channel.members:
                     member_list.append(member.display_name)
-                embed.add_field(name="Users Here", value=f"{member_list}", inline=False)
+                embed.add_field(name="Users Here", value=f"**`{member_list}`**")
                 return await interaction.respond(embed=embed)
                 # bruh, typically i typed everything without internet connection, all the thank to egypt
                 # when it back i'll start a debugging session, i mean no code start working from the first time lol
@@ -205,7 +229,7 @@ class Views():
                     msg = await interaction.original_response()
                     return await msg.edit(f"Done, Slow Mode Has been Changed", view=None, delete_after=5)
                 dropdown.callback = slow_mode_select_callback
-                await interaction.respond("Select Slowmode Delay From This DropDown", view=view, ephemeral=True, delete_after=300)
+                return await interaction.respond("Select Slowmode Delay From This DropDown", view=view, ephemeral=True, delete_after=300)
 
             elif selected == "nsfw":
                 if interaction.channel.nsfw:
@@ -258,6 +282,56 @@ class Views():
                         overwrite.view_channel = None
                         await interaction.channel.set_permissions(target=perm, overwrite=overwrite)
                     return await interaction.respond(f"Done, Reverted to unhidden", ephemeral=True, delete_after=5)
+            
+            elif selected == "clear":
+                btn_view = discord.ui.View()
+                btn = discord.ui.Button(style=discord.ButtonStyle.danger, label="Yes")
+                async def btn_view_callback(interaction: discord.Interaction):
+                    await interaction.response.defer()
+                    def check(m: discord.Message):
+                        return not m.author.id == interaction.client.user.id
+                    await interaction.channel.purge(limit=500, check=check)
+                    return await interaction.edit_original_response(content="Done!", view=None, delete_after=5)
+                btn.callback = btn_view_callback
+                btn2 = discord.ui.Button(style=discord.ButtonStyle.green, label="No")
+                async def btn2_view_callback(interaction: discord.Interaction):
+                    await interaction.response.defer()
+                    return await interaction.delete_original_response()
+                btn2.callback = btn2_view_callback
+                btn_view.add_item(btn)
+                btn_view.add_item(btn2)
+                return await interaction.respond(f"Are you sure you want to continue?", ephemeral=True, view=btn_view)
+
+
+        @discord.ui.select(custom_id="activity",
+                           placeholder="Select To Start an Activity",
+                           options=[
+                               discord.SelectOption(label="Watch Together", value="watch_together"),
+                               discord.SelectOption(label="Poker Night", value="poker_night"),
+                               discord.SelectOption(label="Jamspace", value="jamspace"),
+                               discord.SelectOption(label="Putt Party", value="putt_party"),
+                               discord.SelectOption(label="Gartic Phone", value="gartic_phone"),
+                               discord.SelectOption(label="Know What I Meme", value="know_what_i_meme"),
+                               discord.SelectOption(label="Chess In The Park", value="chess_in_the_park"),
+                               discord.SelectOption(label="Bobble League", value="bobble_league"),
+                               discord.SelectOption(label="Land", value="land"),
+                               discord.SelectOption(label="Sketch Heads", value="sketch_heads"),
+                               discord.SelectOption(label="Blazing 8s", value="blazing_8s"),
+                               discord.SelectOption(label="SpellCast", value="spell_cast"),
+                               discord.SelectOption(label="Checkers In The Park", value="checkers_in_the_park"),
+                               discord.SelectOption(label="Letter League", value="letter_league"),
+                           ])
+        async def activites_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
+            await interaction.response.defer()
+            await interaction.message.edit(content=interaction.message.content, view=self)
+            channel_data = await DataBase.get_channel(None, interaction.channel_id, interaction.guild_id)
+            if not interaction.user.id in channel_data:
+                return await interaction.respond("This Option is not available for you, only channel owner", ephemeral=True, delete_after=5)
+            invite = await interaction.channel.create_activity_invite(discord.EmbeddedActivity[select.values[0]])
+            return await interaction.respond(f"The User {interaction.user.mention} Has Created This Activity Invite_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍_‍{invite}")
+            #                                                                                                      ^^^^^^^ discord ☕
+
+
         @discord.ui.select(select_type=discord.ComponentType.user_select, placeholder="Select a User to edit it", custom_id="member_settings")
         async def view_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
             await interaction.response.defer()
