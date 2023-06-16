@@ -3,14 +3,14 @@ Views Helpers For VoiceFive Main File
 
 Views | Views.py
 """
-
 # import json
 # import os
 # import time
 from cogs.voice.DataBase import DataBase
 from cogs.voice.Embeds import Embeds
-import discord
 import asyncio
+import discord
+from discord.ext import commands
 
 db = DataBase()
 
@@ -97,6 +97,7 @@ class Views():
         """question about the class name?, bruh"""
         def __init__(self):
             super().__init__(timeout=None)
+            self.cooldown = commands.CooldownMapping.from_cooldown(1, 600, commands.BucketType.member)
 
         @discord.ui.select(custom_id="channel_settings",
                            placeholder="Select a channel option",
@@ -120,6 +121,10 @@ class Views():
             
             channel_data = await db.get_channel(None, interaction.channel_id, interaction.guild_id)
             if selected == "name":
+                bucket = self.cooldown.get_bucket(interaction.message)
+                retry = bucket.update_rate_limit()
+                if retry:
+                    return await interaction.response.send_message(f"Changing Channel Names Have a 10min Cooldown, Try again in `{round(retry, 1)}` seconds.", ephemeral=True)
                 modal = discord.ui.Modal(title="Channel Name")
                 modal.add_item(discord.ui.InputText(label="New Channel Name", placeholder="Please enter the new channel name", value=interaction.channel.name))
                 async def modal_callback(interaction: discord.Interaction):
@@ -263,7 +268,7 @@ class Views():
                         overwrite.view_channel = None
                         await interaction.channel.set_permissions(target=perm, overwrite=overwrite, reason="")
                     return await interaction.respond(f"Done, Reverted to unhidden", ephemeral=True, delete_after=5)
-            
+
             elif selected == "clear":
                 btn_view = discord.ui.View()
                 btn = discord.ui.Button(style=discord.ButtonStyle.danger, label="Yes")
