@@ -57,7 +57,7 @@ class Control(discord.Cog):
 
     @discord.Cog.listener()
     async def on_guild_channel_update(self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel):
-        if not before.id in await db.get_guild(before.guild.id):
+        if not before.id in map((lambda x: x[1] if x else []), (await db.get_guild(before.guild.id))):
             return
         if not after.category:
             try:
