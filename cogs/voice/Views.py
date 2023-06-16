@@ -1,10 +1,18 @@
+"""
+Views Helpers For VoiceFive Main File
+
+Views | Views.py
+"""
+
 # import json
 # import os
 # import time
 from cogs.voice.DataBase import DataBase
+from cogs.voice.Embeds import Embeds
 import discord
 import asyncio
 
+db = DataBase()
 
 class Views():
     def __init__(self):
@@ -20,28 +28,24 @@ class Views():
                             options=[discord.SelectOption(label="Disconnct", description="Disconnect the user from this channel", value="disconnect"),
                                     discord.SelectOption(label="Mute", description="Mute this user from talking", value="mute"),
                                     discord.SelectOption(label="Reject", description="Reject this user from joining the channel", value="reject"),
-                                    discord.SelectOption(label="Hide", description="Hide this channel from this user", value="hide"),
-
-                                    # discord.SelectOption(label="Deafen", description="Deafen this user from talking/hearing")
-                                    # TODO: Make a Role system for the temp channels 
-                                    # so i can edit the user freely without fear of the global member permissions
-                                    ]
+                                    discord.SelectOption(label="Hide", description="Hide this channel from this user", value="hide")
+                                ]
                             )
         async def edit_member_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
             await interaction.response.defer() # DO THIS SHIT.. PLS
             selected = select.values[0]
-
             # -- Placeholder -- #
-
             if selected == "reject":
                 params: discord.PermissionOverwrite = interaction.channel.overwrites_for(self.edit_user)
                 params.connect = False
                 await interaction.channel.set_permissions(target=self.edit_user, overwrite=params, reason="This user has been rejected by the temp owner.")
                 msg = await interaction.original_response()
                 await interaction.respond(content=f"The Member {self.edit_user.mention} has been rejected.", view=None, delete_after=5)
-                if self.edit_user.voice.channel.id == interaction.channel_id:
+                if self.edit_user.voice and self.edit_user.voice.channel.id == interaction.channel_id: # (Fixed) Possible Error "NoneType Has No attr"
+                    # If the user alr on the channel, kick it out
                     return await self.edit_user.move_to(None)
                 else:
+                    # otherwise continue
                     return
 
             if selected == "hide":
@@ -56,18 +60,22 @@ class Views():
 
             # -- Placeholder -- #
 
+            # Return statements if the edit gonna need the selected user to be on vc
             if not self.edit_user.voice:
                     return await interaction.respond("This user is not connected to this voice channel.", ephemeral=True)
             elif not self.edit_user.voice.channel.id == interaction.channel_id:
                 return await interaction.respond("This user is not connected to this voice channel.", ephemeral=True)
 
-            # -- Placeholder -- #
+            # -- command's / interactions requires a vc connected -- #
 
             if selected == "disconnect":
                 await self.edit_user.move_to(None)
                 return await interaction.respond(content=f"The Member {self.edit_user.mention} has been disconnected.", view=None, delete_after=5)
 
             if selected == "mute":
+                # this one actully break my mind for how its working 
+                # since when you edit a user permissions (mute it)
+                # the user should to reconnect to get effected ;-;
                 this_channel = (await interaction.guild.fetch_channel(int(interaction.channel.id)))
                 params: discord.PermissionOverwrite = this_channel.overwrites_for(self.edit_user)
                 if params.speak or params.speak is None:
@@ -101,15 +109,16 @@ class Views():
                                     discord.SelectOption(label="Lock", description="To Lock this channel with it's users", value="lock"),
                                     discord.SelectOption(label="Hide", description="To Hide this channel and only users inside will be able to see it", value="hide"),
                                     discord.SelectOption(label="Bitrate", description="To Change this channel bitrate", value="bitrate"),
-                                    discord.SelectOption(label="Clear", description="To Clear up this channel Messages", value="clear"),
-                                    ],
+                                    discord.SelectOption(label="Clear", description="To Clear up this channel Messages", value="clear"),],
                                 )
         async def settings_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
             await interaction.message.edit(content=interaction.message.content, view=self)
 
             selected = select.values[0]
-
-            channel_data = await DataBase.get_channel(None, interaction.channel_id, interaction.guild_id)
+            
+            # -- Interactions will responded with Modal Views
+            
+            channel_data = await db.get_channel(None, interaction.channel_id, interaction.guild_id)
             if selected == "name":
                 modal = discord.ui.Modal(title="Channel Name")
                 modal.add_item(discord.ui.InputText(label="New Channel Name", placeholder="Please enter the new channel name", value=interaction.channel.name))
@@ -136,22 +145,12 @@ class Views():
                     await interaction.response.defer()
                     channel_limit = modal.children[0].value
                     if not channel_limit.isnumeric():
-                        msg = await interaction.respond(f"Please Input a Valid Number!", ephemeral=True)
-                        await asyncio.sleep(5)
-                        try:
-                            return await msg.delete()
-                        except:
-                            return
+                        return await interaction.respond(f"Please Input a Valid Number!", ephemeral=True, delete_after=5)
                     await interaction.channel.edit(user_limit=int(channel_limit))
-                    msg = await interaction.respond(f"Done, Channel User Limit has been changed to {'Unlimited' if int(channel_limit) == 0 else channel_limit}", ephemeral=True)
-                    await asyncio.sleep(5)
-                    try:
-                        return await msg.delete()
-                    except:
-                        return
+                    return await interaction.respond(f"Done, Channel User Limit has been changed to {'Unlimited' if int(channel_limit) == 0 else channel_limit}", ephemeral=True, delete_after=5)
                 modal.callback = modal_callback
                 return await interaction.response.send_modal(modal=modal)
-                
+
             elif selected == "bitrate":
                 channel_bits = int(str(int(interaction.guild.bitrate_limit))[:-3]) # Bro wtf is this butt-shit?
                 placeholder = f"From 8 To {channel_bits}"
@@ -174,28 +173,9 @@ class Views():
             # -- #
             if selected == "info": # No idea for adding owner check for this.. right?
                 channel: discord.VoiceChannel = await interaction.guild.fetch_channel(int(interaction.channel_id))
-                embed = discord.Embed(title='Channel Information', color=discord.Color.blurple())
-                embed.add_field(name="Channel Name", value=f"{channel.name}")
-                embed.add_field(name="Channel Creator", value=f"<@{channel_data[0]}>\nID: `{channel_data[0]}`")
-                embed.add_field(name="", value="", inline=False) # discord.Embed() ☕
-                embed.add_field(name="Created At", value=f"<t:{int(channel.created_at.timestamp())}:R>")
-                embed.add_field(name="Is NSFW", value=f"{'Nope' if not channel.is_nsfw() else 'Yup'}")
-                embed.add_field(name="", value="", inline=False)
-                embed.add_field(name="Channel bitrate", value=f"{channel.bitrate} || {'Low Quality' if channel.bitrate < 60000 else 'Mid Quality' if channel.bitrate < 90000 else 'High Quality'}")
-                embed.add_field(name="Video Quality", value=f"{'Full Quality' if channel.video_quality_mode == discord.VideoQualityMode.full else 'Normal Quality'}")
-                embed.add_field(name="", value="", inline=False)
-                embed.add_field(name="User Limit", value=f"{'Unlimited' if channel.user_limit == 0 else channel.user_limit}")
-                try: slowmode_delay = channel.slowmode_delay # For now, there is no attr for slowmode, it maybe magred from my PR on #2112
-                except: slowmode_delay = 0
-                embed.add_field(name="Slowmode Delay", value=f"{'No Slowmode' if slowmode_delay == 0 else slowmode_delay}")
-                embed.add_field(name="", value="", inline=False)
-                member_list = []
-                for member in channel.members:
-                    member_list.append(member.display_name)
-                embed.add_field(name="Users Here", value=f"**`{member_list}`**")
+                embed = Embeds.Info(interaction=interaction, channel=channel, channel_data=channel_data)
                 return await interaction.respond(embed=embed)
-                # bruh, typically i typed everything without internet connection, all the thank to egypt
-                # when it back i'll start a debugging session, i mean no code start working from the first time lol
+
             if not interaction.user.id in channel_data:
                 return await interaction.respond("This Option is not available for you, only channel owner", ephemeral=True, delete_after=5)
 
@@ -204,23 +184,24 @@ class Views():
 
             elif selected == "slow_mode":
                 view = discord.ui.View(timeout=300)
-                dropdown = discord.ui.Select(placeholder="Please Select a Cooldown Period", options=[
-                           discord.SelectOption(label="off", value="0"),
-                           discord.SelectOption(label="5s", value="5"),
-                           discord.SelectOption(label="10s", value="10"),
-                           discord.SelectOption(label="15s", value="15"),
-                           discord.SelectOption(label="30s", value="30"),
-                           discord.SelectOption(label="1m", value="60"),
-                           discord.SelectOption(label="2m", value="120"),
-                           discord.SelectOption(label="5m", value="300"),
-                           discord.SelectOption(label="10m", value="600"),
-                           discord.SelectOption(label="15m", value="900"),
-                           discord.SelectOption(label="30m", value="1800"),
-                           discord.SelectOption(label="1h", value="3600"),
-                           discord.SelectOption(label="2h", value="7200"),
-                           discord.SelectOption(label="6h", value="21600"),
-                           ]
-                        )
+                dropdown = discord.ui.Select(placeholder="Please Select a Cooldown Period",
+                                             options=[
+                                                 discord.SelectOption(label="off", value="0"),
+                                                 discord.SelectOption(label="5s", value="5"),
+                                                 discord.SelectOption(label="10s", value="10"),
+                                                 discord.SelectOption(label="15s", value="15"),
+                                                 discord.SelectOption(label="30s", value="30"),
+                                                 discord.SelectOption(label="1m", value="60"),
+                                                 discord.SelectOption(label="2m", value="120"),
+                                                 discord.SelectOption(label="5m", value="300"),
+                                                 discord.SelectOption(label="10m", value="600"),
+                                                 discord.SelectOption(label="15m", value="900"),
+                                                 discord.SelectOption(label="30m", value="1800"),
+                                                 discord.SelectOption(label="1h", value="3600"),
+                                                 discord.SelectOption(label="2h", value="7200"),
+                                                 discord.SelectOption(label="6h", value="21600"),
+                                                 ]
+                                             )
                 view.add_item(dropdown)
                 async def slow_mode_select_callback(interaction: discord.Interaction):
                     slowmode_delay = int(dropdown.values[0])
@@ -270,7 +251,7 @@ class Views():
                     for member in interaction.channel.members:
                         perms: discord.Permissions = interaction.channel.overwrites_for(member)
                         perms.view_channel = True
-                        await interaction.channel.set_permissions(target=member, overwrite=perms, reason="This user has acsess to this channel by the temp owner.")
+                        await interaction.channel.set_permissions(target=member, overwrite=perms, reason="This channel has been hidden by the temp owner.")
                     role = interaction.guild.default_role
                     perms = interaction.channel.overwrites_for(role)
                     perms.view_channel = False
@@ -280,7 +261,7 @@ class Views():
                     for perm in overwrite_perms:
                         overwrite = interaction.channel.overwrites_for(perm)
                         overwrite.view_channel = None
-                        await interaction.channel.set_permissions(target=perm, overwrite=overwrite)
+                        await interaction.channel.set_permissions(target=perm, overwrite=overwrite, reason="")
                     return await interaction.respond(f"Done, Reverted to unhidden", ephemeral=True, delete_after=5)
             
             elif selected == "clear":
@@ -288,8 +269,7 @@ class Views():
                 btn = discord.ui.Button(style=discord.ButtonStyle.danger, label="Yes")
                 async def btn_view_callback(interaction: discord.Interaction):
                     await interaction.response.defer()
-                    def check(m: discord.Message):
-                        return not m.author.id == interaction.client.user.id
+                    check = lambda m: not m.author.id == interaction.client.user.id # TODO: smth better
                     await interaction.channel.purge(limit=500, check=check)
                     return await interaction.edit_original_response(content="Done!", view=None, delete_after=5)
                 btn.callback = btn_view_callback
@@ -324,7 +304,7 @@ class Views():
         async def activites_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
             await interaction.response.defer()
             await interaction.message.edit(content=interaction.message.content, view=self)
-            channel_data = await DataBase.get_channel(None, interaction.channel_id, interaction.guild_id)
+            channel_data = await db.get_channel(None, interaction.channel_id, interaction.guild_id)
             if not interaction.user.id in channel_data:
                 return await interaction.respond("This Option is not available for you, only channel owner", ephemeral=True, delete_after=5)
             invite = await interaction.channel.create_activity_invite(discord.EmbeddedActivity[select.values[0]])
@@ -342,8 +322,7 @@ class Views():
 
             # -- "cool placeholder :>?" -- #
 
-            # discord.VoiceChannel.user_limit
-            if await DataBase.get_channel(interaction.user.id, interaction.channel_id, interaction.guild_id):
+            if await db.get_channel(interaction.user.id, interaction.channel_id, interaction.guild_id):
                 selected_user = select.values[0]
                 if selected_user.id == interaction.user.id:
                     return await interaction.respond("You can't edit yourself 🗿", ephemeral=True, delete_after=5)
@@ -360,3 +339,7 @@ class Views():
                 await interaction.respond("Select an option to edit this user.", view=Views.UserSelector(user=interaction.user, edit_user=selected_user), ephemeral=True)
             else:
                 return await interaction.respond("You are not this channel owner.", ephemeral=True, delete_after=5)
+
+
+# bruh, typically i typed everything without internet connection, all the thank to egypt
+# ~~when it back i'll start a debugging session, i mean no code start working from the first time lol~~ <- it was kinda works ;3
