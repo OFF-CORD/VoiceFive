@@ -17,11 +17,13 @@ DEFAULT_PERMISSIONS.administrator = True
 class Control(discord.Cog):
     def __init__(self, bot):
         self.bot: discord.Bot = bot
-
-    temp_voice = discord.SlashCommandGroup(name="temp_voice", description="To manage temp channels on your server", guilds_only=True, default_member_permissions=DEFAULT_PERMISSIONS)
-    @temp_voice.command(name="setup",description="To setup temp channels on your server", guilds_only=True)
+    
+    temp_voice = discord.SlashCommandGroup(name="temp_voice", description="To manage temp channels on your server", guild_only=True, default_member_permissions=DEFAULT_PERMISSIONS)
+    @temp_voice.command(name="setup",description="To setup temp channels on your server", guild_only=True)
     async def setup(self, ctx: discord.ApplicationContext):
         await ctx.response.defer()
+        if isinstance(ctx.channel, discord.DMChannel):
+            return await ctx.respond("You can't setup temp channels in DMs!")
         category = await ctx.guild.create_category(name="Temp Voice")
         channel = await category.create_voice_channel(name="Join To Create")
         await db.add_guild(guild_id=ctx.guild.id, vc_id=channel.id, vc_category_id=category.id, channel_limit=0, channel_bitrate=3,)
