@@ -5,7 +5,7 @@
 </center>
 
 # Note
-this cog is **STILL** under maintain and this version is just an test and **NOT** meant to be released now.
+this cog is **STILL** under maintenance and this version is just an test and **NOT** meant to be released now.
 
 # VoiceFive
 a Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on your guild!
@@ -17,6 +17,8 @@ a Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 
 # Features?
 - Higley Customized
+- Public Reedy
+- - Ready to be used on a bot that intent to be public
 - Each User Permissions 
 - SlashCommands
 - SelectMenus
