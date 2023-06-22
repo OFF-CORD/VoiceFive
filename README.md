@@ -17,7 +17,7 @@ a Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 
 # Features?
 - Higley Customized
-- Public Reedy
+- Public Ready
 - - Ready to be used on a bot that intent to be public
 - Each User Permissions 
 - SlashCommands
