@@ -41,3 +41,9 @@ a Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 - Edit the token in `main.py`
 - `python3 main.py`
 and that's it!, enjoy :>
+
+# Contribution
+Pull Requests are welcome !
+
+# Supporting
+Stars Are Appreciated⭐
