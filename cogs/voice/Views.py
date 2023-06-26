@@ -3,9 +3,6 @@ Views Helpers For VoiceFive Main File
 
 Views | Views.py
 """
-# import json
-# import os
-# import time
 from cogs.voice.DataBase import DataBase
 from cogs.voice.Embeds import Embeds
 import asyncio
@@ -49,14 +46,13 @@ class Views():
                     return
 
             if selected == "hide":
+                if self.edit_user.voice and self.edit_user.voice.channel.id == interaction.channel_id: # (fixed) ERROR: NoneType has no attr ...
+                    await self.edit_user.move_to(None)
                 params: discord.PermissionOverwrite = interaction.channel.overwrites_for(self.edit_user)
                 params.view_channel = False
                 await interaction.channel.set_permissions(target=self.edit_user, overwrite=params, reason="This channel has been hidden from this user by the temp owner.")
-                await interaction.respond(content=f"The Channel has been hidden for the user {self.edit_user.mention}.", view=None, delete_after=5)
-                if self.edit_user.voice.channel.id == interaction.channel_id:
-                    return await self.edit_user.move_to(None)
-                else:
-                    return
+                msg = await interaction.original_response()
+                return await msg.edit(content=f"The Channel has been hidden for the user {self.edit_user.mention}.", view=None, delete_after=5)
 
             # -- Placeholder -- #
 
@@ -110,7 +106,8 @@ class Views():
                                     discord.SelectOption(label="Lock", description="To Lock this channel with it's users", value="lock"),
                                     discord.SelectOption(label="Hide", description="To Hide this channel and only users inside will be able to see it", value="hide"),
                                     discord.SelectOption(label="Bitrate", description="To Change this channel bitrate", value="bitrate"),
-                                    discord.SelectOption(label="Clear", description="To Clear up this channel Messages", value="clear"),],
+                                    discord.SelectOption(label="Clear", description="To Clear up this channel Messages", value="clear")
+                                    ],
                                 )
         async def settings_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
             await interaction.message.edit(content=interaction.message.content, view=self)
@@ -134,12 +131,7 @@ class Views():
                     if channel_name.isspace():
                         channel_name = f"{interaction.channel.user_limit}"
                     await interaction.channel.edit(name=channel_name)
-                    msg = await interaction.respond(f"Done, Channel Name has been changed to {channel_name}", ephemeral=True)
-                    await asyncio.sleep(5)
-                    try:
-                        return await msg.delete()
-                    except:
-                        return
+                    return await interaction.respond(f"Done, Channel Name has been changed to {channel_name}", ephemeral=True, delete_after=5)
                 modal.callback = modal_callback
                 return await interaction.response.send_modal(modal=modal)
 
@@ -305,7 +297,8 @@ class Views():
                                discord.SelectOption(label="SpellCast", value="spell_cast"),
                                discord.SelectOption(label="Checkers In The Park", value="checkers_in_the_park"),
                                discord.SelectOption(label="Letter League", value="letter_league"),
-                           ])
+                               ]
+                           )
         async def activites_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
             await interaction.response.defer()
             await interaction.message.edit(content=interaction.message.content, view=self)
