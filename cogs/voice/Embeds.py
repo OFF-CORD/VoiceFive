@@ -8,6 +8,7 @@ import discord
 
 
 class Embeds():
+    """Class contains all the embed objects for VoiceFive"""
     class Panel(discord.Embed):
         """Discord Embed that will be called when a user create's a temp channel"""
         def __init__(self, member: discord.Member):
@@ -41,15 +42,26 @@ User {member.mention} has Created this temp channel
             self.set_footer(text=f"Requested by {interaction.user}", icon_url=interaction.user.display_avatar.url)
 
 
-    class Warning(discord.Embed):
+    class DeleteWarning(discord.Embed):
         """Discord Embed that will be used to warn the owner with wrong bot usage"""
-        def __init__(self):
-            super().__init__(title="Warning ⚠", color=discord.Color.red())
+        def __init__(self, user: discord.Member = None):
+            super().__init__(title="Warning :warning:", color=discord.Color.red())
+            self.add_field(name="Info", value=f"> User {user.mention} has deleted the temp channel parent!") if user else None
             self.add_field(
                 name="Message",
                 value=f"""
-Please resetup your server temp channels
+> Please resetup your server temp channels
 - If you want to edit the channel's preferences you can just edit its name/prefrences or anything!
 - Editing the channel's name/prefrences will make it's child's same is its parent.
 - To change the temp channel category you can just place it at any category but **DO NOT** let it without category!
+                """)
+
+    class ClearWarning(discord.Embed):
+        """Discord Embed that will be used to warn the temp channel owner for clearing the channel content"""
+        def __init__(self):
+            super().__init__(title="Warning :warning:", color=discord.Color.red())
+            self.add_field(
+                name="Message",
+                value=f"""
+> You Are About Deleting All Channel Messages, There No Way To Restore The Deleted Messages!
                 """)
