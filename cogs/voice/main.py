@@ -4,6 +4,7 @@ VoiceFive, A Py-Cord Cog (Gear) Made to mange temp channels
 Main File | main.py
 """
 import discord
+import asyncio
 from cogs.voice.Embeds import Embeds
 from cogs.voice.Views import Views
 from cogs.voice.DataBase import DataBase
@@ -18,7 +19,7 @@ class Control(discord.Cog):
     def __init__(self, bot):
         self.bot: discord.Bot = bot
     
-    temp_voice = discord.SlashCommandGroup(name="temp_voice", description="To manage temp channels on your server", guild_only=True, default_member_permissions=DEFAULT_PERMISSIONS)
+    temp_voice = discord.SlashCommandGroup(name="voice", description="To manage temp voice channels on your server", guild_only=True, default_member_permissions=DEFAULT_PERMISSIONS)
     @temp_voice.command(name="setup",description="To setup temp channels on your server", guild_only=True)
     async def setup(self, ctx: discord.ApplicationContext):
         await ctx.response.defer()
@@ -34,7 +35,7 @@ class Control(discord.Cog):
     @discord.Cog.listener()
     async def on_ready(self):
         self.bot.add_view(Views.Dropdown())
-        print("Loadded Presistent View (Dropdown)")
+        print("[🔵] Loadded Presistent View")
 
     @discord.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -62,26 +63,26 @@ class Control(discord.Cog):
         if not before.id in map((lambda x: x[1] if x else []), (await db.get_guild(before.guild.id))):
             return
         if not after.category:
-            try:
-                embed = Embeds.Warning()
-                await after.send(f"{after.guild.owner.mention}", embed=embed)
-            except:
-                pass
+            try: embed = Embeds.DeleteWarning(); await after.send(f"{after.guild.owner.mention}", embed=embed)
+            except: pass #                   ~~^~~ smi colon deez nutz
             return await db.remove_guild(before.guild.id, before.id)
-        else:
-            return
+        else: return
 
     @discord.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-        if not channel.id in await db.get_guilds(channel.guild.id):
+        if not channel.id in map((lambda x: x[1] if x else []), (await db.get_guild(channel.guild.id))):
             return
         return await db.remove_guild(channel.guild.id, channel.id)
-
-
+    
+    @discord.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        if not guild.id in map((lambda x: x[0] if x else []), (await db.get_guild(guild.id))):
+            return
+        return await asyncio.gather(*(db.remove_guild(guild.id, channel_id) for channel_id in map(lambda x: x[1] if x else [], await db.get_guild(guild.id))))
+        #            ~~^~~ goodluck understanding what's going on :3
 
 # - Do You know What Girl Called "Lisa"?
 # - No!
-
 
 def setup(bot: discord.Bot):
     bot.add_cog(Control(bot))
