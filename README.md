@@ -6,7 +6,7 @@
 
 
 # VoiceFive
-A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on your guild!
+A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on your guild ⚡🎙️
 
 ​
 ​
@@ -27,8 +27,7 @@ A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 # Features?
 - Higley Customized
 - Public Ready
-- - Ready to be used on a bot that intent to be public
-- Each User Permissions 
+- User Permissions
 - SlashCommands
 - SelectMenus
 - Modals
@@ -44,7 +43,7 @@ A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 
 
 # How To Install?
-- `git clone https://github.com/DARSHTRON/VoiceFive`
+- `git clone https://github.com/OFF-CORD/VoiceFive`
 - `cd VoiceFive`
 - `pip3 install -r requirements.txt` or you can build a new venv
 - Edit the token in `main.py`
@@ -52,7 +51,7 @@ A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 and that's it!, enjoy :3
 
 # Contribution
-Pull Requests are welcome!
+Pull requests are welcome!
 
 # Supporting
-Stars Are Appreciated ⭐
+Stars are appreciated ⭐
