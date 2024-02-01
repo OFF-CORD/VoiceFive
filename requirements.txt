@@ -9,6 +9,6 @@ frozenlist==1.3.3
 idna==3.4
 multidict==6.0.4
 prettytable==3.8.0
-py-cord @ git+https://github.com/Pycord-Development/pycord@3021603723a4af6ca3398602902d70e0b60fc754
+py-cord==2.4.1
 wcwidth==0.2.6
 yarl==1.9.2

@@ -6,7 +6,7 @@
 
 
 # VoiceFive
-A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on your guild ⚡🎙️
+A well maintained Py-cord Cog (Gear) made to manage "Temporary Voice Channels" in your discord guild ⚡🎙️
 
 ​
 ​
@@ -25,12 +25,10 @@ A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 ​
 
 # Features?
-- Higley Customized
 - Public Ready
 - User Permissions
 - SlashCommands
-- SelectMenus
-- Modals
+- SelectMenus and Modals
 <details>
 <summary>◾ There is more?</summary>
 <br>
@@ -51,7 +49,7 @@ A Py-cord Cog (Gear) well maintained to mange the "Temporary Voice Channels" on 
 and that's it!, enjoy :3
 
 # Contribution
-Pull requests are welcome!
+Pull requests are welcome!, code formatting is using [the ruff python formatter](https://github.com/astral-sh/ruff)
 
 # Supporting
 Stars are appreciated ⭐
