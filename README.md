@@ -49,7 +49,7 @@ A well maintained Py-cord Cog (Gear) made to manage "Temporary Voice Channels" i
 and that's it!, enjoy :3
 
 # Contribution
-Pull requests are welcome!, code formatting is using [the ruff python formatter](https://github.com/astral-sh/ruff)
+Pull requests are welcome!, code formatting is done using [the ruff python formatter](https://github.com/astral-sh/ruff)
 
 # Supporting
 Stars are appreciated ⭐
